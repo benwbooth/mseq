@@ -1,0 +1,61 @@
+module Mseq
+    grammar Mseq
+        include Attributes
+        include Contexts
+        include Controllers
+        include Macros
+        include Patterns
+        include Pitch
+        include Sequences
+        include Sysex
+        include Text
+        include Time
+        include Tracks
+
+        rule score
+            expressions
+        end
+        rule space
+        [ \t\n]
+        end
+        rule expressions
+            (space* expression space*)*
+        end
+        rule expression
+            comment / name / list_keyword / include_keyword / set_keyword / set_multi_keyword
+        end
+        rule comment
+            "'" (!"'" . )* "'"
+        end
+        rule name
+            [a-zA-Z_] [a-zA-Z0-9_#&^.!$]*
+        end
+        rule list_keyword
+            'list'
+        end
+        rule include_keyword
+            'include' filename:(!space)+
+        end
+
+        rule int
+            [+-]?[0-9]+
+        end
+        rule pos_int
+            [0-9]+
+        end
+
+        rule decimal
+            pos_int '.' pos_int
+        end
+        rule fraction
+            pos_int? '/'+ pos_int?
+        end
+
+        rule chord
+            '~'? note+
+        end
+        rule note
+            [a-gA-G] 
+        end
+    end
+end
