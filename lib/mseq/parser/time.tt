@@ -52,7 +52,7 @@ Module Mseq
         rule restart_keyword
             'restart'
         end
-        rule time_tag
+        rule time_keyword
             'time' space+ name
         end
 

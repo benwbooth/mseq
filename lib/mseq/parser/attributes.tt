@@ -35,7 +35,8 @@ module Mseq
             '@@' [+-=] octave_modifier:pos_int
         end
         rule octave_attr
-            '@' [+-=] octave_modifier:pos_int
+            ('@' [+-=] octave_modifier:pos_int) /
+            ('@'+)
         end
 
         rule track_transpose_chromatic
