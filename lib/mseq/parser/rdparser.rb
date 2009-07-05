@@ -1,10 +1,11 @@
 class RDParser
   attr_accessor :pos
   attr_accessor :input_pos
+  attr_accessor :lex_token_stack
   attr_reader :rules
 
   def initialize(&block)
-    @lex_tokens = []
+    @lex_token_stack = [[]]
     @rules = {}
     @start = nil
     instance_eval(&block)
@@ -28,7 +29,7 @@ class RDParser
     @pos += 1
 
     token=nil
-    @lex_tokens.any? do |tok|
+    @lex_token_stack.last.any? do |tok|
       match = tok.pattern.match(@input[@input_pos, @input.length-@input_pos])
       if match
         @input_pos += match.end(0)
@@ -57,7 +58,7 @@ class RDParser
   LexToken = Struct.new(:pattern, :block)
 
   def token(pattern, &block)
-    @lex_tokens << LexToken.new(Regexp.new('\\A(?:' + pattern.source + ')', pattern.options), block)
+    @lex_token_stack.last << LexToken.new(Regexp.new('\\A(?:' + pattern.source + ')', pattern.options), block)
   end
 
   def start(name, &block)
