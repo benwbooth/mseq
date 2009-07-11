@@ -22,7 +22,8 @@ module Mseq
             (space* expression space*)*
         end
         rule expression
-            comment / name / list_keyword / include_keyword / set_keyword / set_multi_keyword
+            comment / name / list_keyword / 
+            include_keyword / set_keyword / set_multi_keyword
         end
         rule comment
             "'" (!"'" . )* "'"
@@ -53,9 +54,6 @@ module Mseq
 
         rule chord
             '~'? note+
-        end
-        rule note
-            [a-gA-G] 
         end
     end
 end
