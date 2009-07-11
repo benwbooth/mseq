@@ -1,11 +1,9 @@
 class RDParser
   attr_accessor :pos
   attr_accessor :input_pos
-  attr_accessor :lex_token_stack
   attr_reader :rules
 
   def initialize(&block)
-    @lex_token_stack = [[]]
     @rules = {}
     @start = nil
     instance_eval(&block)
@@ -25,41 +23,35 @@ class RDParser
     return result
   end
 
-  def next_token
+  def next_token(tok)
     @pos += 1
 
     token=nil
-    @lex_token_stack.last.any? do |tok|
-      match = tok.pattern.match(@input[@input_pos, @input.length-@input_pos])
-      if match
-        @input_pos += match.end(0)
-        token = tok.block.call(match.to_s) if tok.block
-        true
+    match = tok.match(@input[@input_pos, @input.length-@input_pos])
+    if match
+      if match.length > 1
+        @input_pos += match.end(1)
+        token = match[1].to_s
       else
-        false
+        @input_pos += match.end(0)
+        token = match.to_s
       end
     end
     return token
   end
 
   def expect(tok)
-    t = next_token
+    t = next_token(tok)
     if @pos - 1 > @max_pos
       @max_pos = @pos - 1
       @expected = []
     end
-    return t if tok === t
+    return t if !t.nil?
     @expected << tok if @max_pos == @pos - 1 && !@expected.include?(tok)
     return nil
   end
 
   private
-
-  LexToken = Struct.new(:pattern, :block)
-
-  def token(pattern, &block)
-    @lex_token_stack.last << LexToken.new(Regexp.new('\\A(?:' + pattern.source + ')', pattern.options), block)
-  end
 
   def start(name, &block)
     rule(name, &block)
@@ -74,6 +66,13 @@ class RDParser
   end
 
   def match(*pattern, &block)
+    pattern.map! do |p|
+      if p.is_a? Regexp
+        Regexp.new('\\A(?:'+p.source+')', p.options)
+      else
+        p
+      end
+    end
     @current_rule.add_match(pattern, block)
   end
 
