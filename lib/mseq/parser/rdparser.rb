@@ -14,6 +14,8 @@ class RDParser
     @input = string
     @pos = 0
     @input_pos = 0
+    @last_pos = 0
+    @last_input_pos = 0
     @max_pos = 0
     @expected = []
     result = @start.parse
@@ -21,6 +23,12 @@ class RDParser
       raise "Parse error. expected: '#{@expected.join(', ')}', found '#{@tokens[@max_pos]}'"
     end
     return result
+  end
+
+  def back_up
+    @pos = @last_pos
+    @input_pos = @last_input_pos
+    return self
   end
 
   def next_token(tok)
@@ -96,7 +104,7 @@ class RDParser
       end
     end
 
-    def parse
+    def parse(start, start_input)
       match_result = try_matches(@matches)
       return nil unless match_result
       loop do
@@ -110,8 +118,8 @@ class RDParser
 
     def try_matches(matches, pre_result = nil)
       match_result = nil
-      start = @parser.pos
-      start_input = @parser.input_pos
+      @parser.last_pos = @parser.pos
+      @parser.last_input_pos = @parser.input_pos
       matches.each do |match|
         r = pre_result ? [pre_result] : []
         match.pattern.each do |token|
@@ -139,8 +147,7 @@ class RDParser
           end
           break
         else
-          @parser.pos = start
-          @parser.input_pos = start_input
+          @parser.back_up
         end
       end
       return match_result
