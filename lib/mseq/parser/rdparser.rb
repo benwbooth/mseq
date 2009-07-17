@@ -1,6 +1,8 @@
 class RDParser
   attr_accessor :pos
   attr_accessor :input_pos
+  attr_accessor :last_pos
+  attr_accessor :last_input_pos
   attr_reader :rules
 
   def initialize(&block)
@@ -118,8 +120,8 @@ class RDParser
 
     def try_matches(matches, pre_result = nil)
       match_result = nil
-      @parser.last_pos = @parser.pos
-      @parser.last_input_pos = @parser.input_pos
+      last_pos = @parser.pos
+      last_input_pos = @parser.input_pos
       matches.each do |match|
         r = pre_result ? [pre_result] : []
         match.pattern.each do |token|
@@ -139,6 +141,9 @@ class RDParser
             end
           end
         end
+
+        @parser.last_pos = last_pos
+        @parser.last_input_pos = last_input_pos
         if r
           if match.block
             match_result = match.block.call(*r)
@@ -147,7 +152,8 @@ class RDParser
           end
           break
         else
-          @parser.back_up
+          @parser.pos = last_pos
+          @parser.input_pos = last_input_pos
         end
       end
       return match_result
