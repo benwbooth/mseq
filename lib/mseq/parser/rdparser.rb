@@ -22,7 +22,8 @@ class RDParser
     @expected = []
     result = @start.parse
     if @input_pos != @input.length
-      raise "Parse error. expected: '#{@expected.join(', ')}', found '#{@tokens[@max_pos]}'"
+      raise "Parse error. expected: '#{@expected.join(', ')}'"+
+        ", found '#{@tokens[@max_pos]}'"
     end
     return result
   end
@@ -40,7 +41,7 @@ class RDParser
     match = tok.match(@input[@input_pos, @input.length-@input_pos])
     if match
       if match.length > 1
-        @input_pos += match.end(1)
+        @input_pos += match.end(0)
         token = match[1].to_s
       else
         @input_pos += match.end(0)
@@ -106,7 +107,7 @@ class RDParser
       end
     end
 
-    def parse(start, start_input)
+    def parse
       match_result = try_matches(@matches)
       return nil unless match_result
       loop do
@@ -146,7 +147,7 @@ class RDParser
         @parser.last_input_pos = last_input_pos
         if r
           if match.block
-            match_result = match.block.call(*r)
+            match_result = match.block.call(r)
           else
             match_result = r[0]
           end

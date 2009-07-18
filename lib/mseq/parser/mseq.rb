@@ -1,5 +1,5 @@
-require File.dirname(__FILE__) + '/rdparser'
-require File.dirname(__FILE__) + '/ast'
+require File.dirname(__FILE__)+'/rdparser'
+require File.dirname(__FILE__)+'/ast'
 
 parser = RDParser.new do
   s = /[\t\r\n ]*/
@@ -8,14 +8,14 @@ parser = RDParser.new do
 
   start :score do
     match(s, :exprs) do |_, exprs|
-      Score.new(exprs)
+      Score.new(*exprs)
     end
   end
 
   rule :exprs do
-    match(:expr, s) do |first_expr, _|
-      exprs = [first_expr]
-      while (expr = @parser.rules[:expr].parse) do
+    match() do |first_expr|
+      exprs = []
+      while (expr = @rules[:expr].parse) do
         exprs << expr
       end
       exprs
@@ -23,37 +23,55 @@ parser = RDParser.new do
   end
 
   rule :expr do
-    match(:comment) do
-    end
-    match(:name) do
+    match(:term, s) do |term|
+      term
     end
   end
 
+  rule :term do
+    match(:comment) { |m| m }
+    match(:name) { |m| m }
+  end
+
   rule :comment do
-    match(/'(.*?)(?:'|(?:\r?\n))/) do |comment|
-      Comment.new(comment)
+    match(/'(.*?)(?:'|(?:\r?\n)|\Z)/) do |comment|
+      Comment.new(comment[0])
     end
   end
 
   rule :name do
     match(/[[:alpha:]]+/u) do |name|
       if names[name] 
-        @parser.rules[names[name]].parse
+        back_up
+        @rules[names[name]].parse
       else
+        back_up
+        @rules[:notes].parse
       end
     end
   end
-  
 
-  instance_eval(File.open('attributes.rb').read)
-  instance_eval(File.open('controllers.rb').read)
-  instance_eval(File.open('macros.rb').read)
-  instance_eval(File.open('patterns.rb').read)
-  instance_eval(File.open('pitch.rb').read)
-  instance_eval(File.open('sequences.rb').read)
-  instance_eval(File.open('sysex.rb').read)
-  instance_eval(File.open('text.rb').read)
-  instance_eval(File.open('time.rb').read)
-  instance_eval(File.open('tracks.rb').read)
+  rule :notes do
+    match() do 
+      notes = []
+      while (note = @rules[:note].parse)
+        notes << note
+      end
+      if notes.length >= 1
+        Notes.new(*notes)
+      else
+        nil
+      end
+    end
+  end
+
+  rule :note do
+    match(/[a-gA-G]/) do |note|
+      Note.new(note)
+    end
+  end
 end
+
+# tests
+puts parser.parse('A B EFG  \'This is a comment \' cd e')
 
